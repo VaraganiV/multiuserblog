@@ -5,10 +5,12 @@ import webapp2
 
 from google.appengine.ext import db
 
-from user import User
-from post import Post
-from comment import Comment
-from like import Like
+from model.user import User
+from model.post import Post
+from model.like import Like
+from model.comment import Comment
+
+
 import myHelper
 
 secret = 'secured_secured'
@@ -190,6 +192,7 @@ class NewPost(BlogHandler):
         """
         if not self.user:
             self.redirect('/blog')
+            return
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -210,6 +213,11 @@ class DeletePost(BlogHandler):
         if self.user:
             key = db.Key.from_path('Post', int(post_id), parent=blog_key())
             post = db.get(key)
+
+            if not post:
+                self.redirect("/login")
+                return
+
             if post.user_id == self.user.key().id():
                 post.delete()
                 self.redirect("/?deleted_post_id="+post_id)
@@ -226,6 +234,10 @@ class EditPost(BlogHandler):
         if self.user:
             key = db.Key.from_path('Post', int(post_id), parent=blog_key())
             post = db.get(key)
+
+            if not post:
+                return self.redirect("/login")
+
             if post.user_id == self.user.key().id():
                 self.render("editpost.html", subject=post.subject,
                             content=post.content)
