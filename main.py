@@ -253,7 +253,7 @@ class EditPost(BlogHandler):
             Updates post.
         """
         if not self.user:
-            reutrn self.redirect('/blog')
+            return self.redirect('/blog')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
@@ -265,10 +265,11 @@ class EditPost(BlogHandler):
             if not post:
                 return self.redirect("/login")
 
-            post.subject = subject
-            post.content = content
-            post.put()
-            self.redirect('/blog/%s' % post_id)
+            if post.user_id == self.user.key().id():
+                post.subject = subject
+                post.content = content
+                post.put()
+                self.redirect('/blog/%s' % post_id)
         else:
             error = "subject and content, please!"
             self.render("editpost.html", subject=subject,
@@ -315,7 +316,7 @@ class EditComment(BlogHandler):
             Updates post.
         """
         if not self.user:
-            self.redirect('/blog')
+            return self.redirect('/blog')
 
         comment = self.request.get('comment')
 
@@ -323,9 +324,11 @@ class EditComment(BlogHandler):
             key = db.Key.from_path('Comment',
                                    int(comment_id), parent=blog_key())
             c = db.get(key)
-            c.comment = comment
-            c.put()
-            self.redirect('/blog/%s' % post_id)
+            
+            if c and c.user_id == self.user.key().id():
+                c.comment = comment
+                c.put()
+                self.redirect('/blog/%s' % post_id)
         else:
             error = "subject and content, please!"
             self.render("editpost.html", subject=subject,
